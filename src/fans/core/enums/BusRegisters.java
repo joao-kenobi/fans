@@ -130,7 +130,11 @@ This writes to CGRAM, effectively setting the palette colors. Accesses to CGRAM 
           bbb  = Name Base Select (Addr>>14)
  </pre>
 	 */
-	OBSEL("$2101")
+	OBSEL("$2101"),
+	WMDATA("$2180"),
+	WMADDL("$2181"),
+	WMADDM("$2182"),
+	WMADDH("$2183")
 	;
 	
 	private String address;

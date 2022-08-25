@@ -44,10 +44,10 @@ public class FileManager {
         return linhas;
     }
     
-    public static void writeFile(String conteudo, String arquivo) {
+    public static void writeFile(String content, String fileName) {
     	try {
-			FileWriter myWriter = new FileWriter(arquivo);
-			myWriter.write(conteudo);
+			FileWriter myWriter = new FileWriter(fileName);
+			myWriter.write(content);
 			myWriter.close();
 		}
     	catch (IOException e) {

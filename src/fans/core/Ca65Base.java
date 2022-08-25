@@ -1,6 +1,7 @@
 package fans.core;
 
 import fans.core.constants.Joy1Consttants;
+import fans.core.constants.NmiTIMenConstants;
 import fans.core.enums.BusRegisters;
 import fans.core.enums.CpuRegisters;
 import fans.core.enums.DmaRegisters;
@@ -10,11 +11,16 @@ import fans.core.interfaces.MethodBody;
 public abstract class Ca65Base extends AsmBase {
 	
 	public Ca65Base() {
+		new InitRoutine().createInitAsmFile();
+		
 		
 		rawAsm(".p816");
 		rawAsm(".smart");
+		
+		
+		defaultBefore();
 		before();
-		rawAsm(".include \"../framework/asm/includes/ca65/macros.asm\"");
+		//rawAsm(".include \"../framework/asm/includes/ca65/macros.asm\"");
 		rawAsm(".include \"../framework/asm/includes/ca65/init.asm\"");
 		
 		segment("CODE");
@@ -28,7 +34,29 @@ public abstract class Ca65Base extends AsmBase {
 		rawAsm(".include \"../framework/asm/includes/ca65/header.asm\"");
 	}
 	
-	protected abstract void before();
+	protected void before() {
+		
+	}
+	
+	protected void defaultBefore() {
+		rawAsm("\n; === DEFAULT ZEROPAGE SECTION ===");
+		segment("ZEROPAGE", () -> {			
+			rawAsm("in_nmi: .res 2");
+		});
+		rawAsm("; === END DEFAULT ZEROPAGE SECTION ===\n");
+		
+		rawAsm("; === DEFAULT BSS SECTION ===");
+		segment("BSS", () -> {			
+			rawAsm("palette_buffer: .res 512");
+			rawAsm("palette_buffer_end:");
+
+			rawAsm("oam_lo_buffer: .res 512"); // low table
+			rawAsm("oam_hi_buffer: .res 32"); // high table
+			rawAsm("oam_buffer_end:");
+		});
+		rawAsm("; === END DEFAULT BSS SECTION ===\n");
+	}
+	protected abstract void init();
 	
 	protected void include(String filePath) {
 		output.append(".include \"").append("../"+filePath).append("\"\n");
@@ -55,8 +83,24 @@ public abstract class Ca65Base extends AsmBase {
 		dmaToCgram(source, "#"+Integer.toString(length), transferMode, channel);
 	}
 	
+	protected void dmaToCgram(String source, String transferMode, int channel) {
+		String sourceWithoutPrefixes = removePrefixes(source);
+		String destination = "#$"+lowByte(BusRegisters.CGDATA); // #$22
+		String length = "#("+sourceWithoutPrefixes+"_end-"+sourceWithoutPrefixes+")";
+		
+		dma(source, destination, length, transferMode, channel);
+	}
+	
 	protected void dmaToCgram(String source, String length, String transferMode, int channel) {
 		String destination = "#$"+lowByte(BusRegisters.CGDATA); // #$22
+		dma(source, destination, length, transferMode, channel);
+	}
+	
+	protected void dmaToVram(String source, String transferMode, int channel) {
+		String sourceWithoutPrefixes = removePrefixes(source);
+		String destination = "#$"+lowByte(BusRegisters.VMDATAL); // #$18
+		String length = "#("+sourceWithoutPrefixes+"_end-"+sourceWithoutPrefixes+")";
+		
 		dma(source, destination, length, transferMode, channel);
 	}
 	
@@ -98,10 +142,9 @@ public abstract class Ca65Base extends AsmBase {
 		ldaSta("#^"+source, DmaRegisters.A1BX.channel(channel)); // bank
 		ldxStx(length, DmaRegisters.DASXL.channel(channel)); // length
 		
-		ldaSta("#$01", CpuRegisters.MDMAEN); // start dma, channel {channel}
+		startDma(channel);
 		rawAsm("; === DMA END  === \n");
 	}
-	
 	protected void readJoypad1(IJoypadReader reader) {
 		checkPressedButton(Joy1Consttants.KEY_LEFT, "@not_left");
 		//moveXHandle("@left");
@@ -177,21 +220,36 @@ public abstract class Ca65Base extends AsmBase {
 		ldaSta(address, BusRegisters.BG12NBA);
 	}
 	
-	protected void blockMove(int length, String sourceAddress, String destinationAddress) {
-		callMacro("blockMove", length, sourceAddress, destinationAddress);
+	protected void enableNmiAndAutoJoypadRead() {		
+		ldaSta(NmiTIMenConstants.ENABLE_NMI_AND_AUTO_JOYPAD_READ, CpuRegisters.NMITIMEN);
+	}
+	
+	protected void blockMove(String sourceAddress, String destinationAddress, int length) {
+		blockMove(sourceAddress, destinationAddress, "#"+length);
+	}
+	
+	protected void blockMove(String sourceAddress, String destinationAddress) {
+		String source = removePrefixes(sourceAddress);
 		
-		//phb();
-//		rawAsm(".if .asize = 8");
-//		rawAsm("rep #$30");
-//		rawAsm(".elseif .isize = 8");
-//		rawAsm("rep #$30");
-//		rawAsm(".endif");
-//		rawAsm("lda #"+(length-1));
-//		rawAsm("ldx #.loword("+sourceAddress+")");
-//		rawAsm("ldy #.loword("+destinationAddress+")");	
-//		//mvn src_bank, dst_bank
-//		rawAsm(".byte $54, ^"+destinationAddress+", ^"+sourceAddress+"");
-		//plb();
+		blockMove(sourceAddress, destinationAddress, "#("+source+"_end-"+source+")");
+	}
+	
+	protected void blockMove(String sourceAddress, String destinationAddress, String length) {
+		//callMacro("blockMove", length, sourceAddress, destinationAddress);
+		
+		phb();
+		rawAsm(".if .asize = 8");
+		rawAsm("rep #$30");
+		rawAsm(".elseif .isize = 8");
+		rawAsm("rep #$30");
+		rawAsm(".endif");
+		rawAsm("lda "+length+"");
+		rawAsm("ldx #.loword("+sourceAddress+")");
+		rawAsm("ldy #.loword("+destinationAddress+")");	
+		//mvn src_bank, dst_bank
+		//rawAsm(".byte $54, ^"+destinationAddress+", ^"+sourceAddress+"");
+		rawAsm("mvn ^"+destinationAddress+", ^"+sourceAddress+"");
+		plb();
 	}
 	
 	protected void callMacro(String name, Object... args) {
@@ -206,5 +264,9 @@ public abstract class Ca65Base extends AsmBase {
 		}
 		
 		rawAsm(name+" "+parameters.toString());
+	}
+	
+	protected void clearOam() {
+		jsr("clear_oam");
 	}
 }

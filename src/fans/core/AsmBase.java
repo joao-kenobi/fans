@@ -6,6 +6,7 @@ import java.util.List;
 import fans.core.arquivo.FileManager;
 import fans.core.constants.IniDispConstants;
 import fans.core.enums.BusRegisters;
+import fans.core.enums.CpuRegisters;
 import fans.core.interfaces.IRegisterAddress;
 import fans.core.interfaces.IRegisterValue;
 import fans.core.interfaces.MethodBody;
@@ -16,18 +17,19 @@ public abstract class AsmBase {
 	protected boolean isX8Bit;
 	protected boolean isY8Bit;
 	
+	protected String getGeneratedCode() {
+		return output.toString();
+	}
+	
 	protected void buildAsmFile() {
 		String file = getDevKitFolder()+"/output/main.asm";
-		FileManager.writeFile(output.toString(), file);
+		FileManager.writeFile(getGeneratedCode(), file);
 		
 		compile();
 	}
 
 	private void compile() {
 		try {
-			//C:\ambiente_desenvolvimento\test\snes-framework\snes-framework\SnesFramework\framework\assemblers\ca65\compile.bat
-			
-			
 			//compile.bat
 			List<String> commands = new ArrayList<String>();
 			commands.add("cd "+getDevKitFolder()+"/assemblers/ca65");
@@ -49,9 +51,7 @@ public abstract class AsmBase {
 		}
 	}
 	
-	protected abstract void init();
-	
-	private String getDevKitFolder() {
+	protected String getDevKitFolder() {
 		return FileManager.getCurrentProjectDirectory()+"/../..";
 	}
 	
@@ -72,8 +72,35 @@ public abstract class AsmBase {
 		output.append("clc").append("\n");
 	}
 	
+	protected void tcd() {
+		output.append("tcd").append("\n");
+	}
+	
+	protected void txs() {
+		output.append("txs").append("\n");
+	}
+	
 	protected void adc(String value) {
 		output.append("adc ").append(value).append("\n");
+	}
+	
+	protected void adcSta(String value, IRegisterAddress register) {
+		adcSta(value, register.getAddress());
+	}
+	
+	protected void adcSta(String value, String target) {
+		adc(value);
+		sta(target);
+	}
+	
+	
+	protected void andSta(String value, IRegisterAddress register) {
+		andSta(value, register.getAddress());
+	}
+	
+	protected void andSta(String value, String target) {
+		and(value);
+		sta(target);
 	}
 	
 	protected void hirom() {
@@ -91,6 +118,10 @@ public abstract class AsmBase {
 	
 	protected void rts() {
 		output.append("rts").append("\n");
+	}
+	
+	protected void rti() {
+		output.append("rti").append("\n");
 	}
 	
 	protected void beq(String value) {
@@ -286,9 +317,45 @@ public abstract class AsmBase {
 		output.append("ldy ").append(value).append("\n");
 	}
 	
-	protected String sta(String value) {
+	protected void ldySty(String valueOrAddress, String... targets) {
+		
+		if (isZero(valueOrAddress)) {
+			for (String target : targets) {				
+				stz(target);
+			}
+			
+			return;
+		}
+		
+		ldy(valueOrAddress);
+		
+		for (String target : targets) {
+			sty(target);
+		}
+	}
+	
+	protected void sty(String value) {
+		output.append("sty ").append(value).append("\n");
+	}
+	
+	protected void sta(IRegisterAddress register) {
+		sta(register.getAddress());
+	}
+	
+	protected void sta(String value) {
 		output.append("sta ").append(value).append("\n");
-		return "sta "+value;
+	}
+	
+	protected void stz(String[] values) {
+		for (String value : values) {
+			stz(value);
+		}
+	}
+	
+	protected void stz(String value, int times) {
+		for (int i = 0; i < times; i++) {
+			stz(value);
+		}
 	}
 	
 	protected void stz(String value) {
@@ -461,6 +528,10 @@ public abstract class AsmBase {
 	 */
 	protected void initScreen() {
 		ldaSta(IniDispConstants.FULL_BRIGHT, BusRegisters.INIDISP);
+	}
+	
+	protected void startDma(int channel) {
+		ldaSta("#%"+Integer.toBinaryString(channel+1), CpuRegisters.MDMAEN); // start dma, channel {channel}
 	}
 	
 	/**

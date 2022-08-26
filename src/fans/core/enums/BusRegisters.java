@@ -134,6 +134,9 @@ This writes to CGRAM, effectively setting the palette colors. Accesses to CGRAM 
 	WMDATA("$2180"),
 	WMADDL("$2181"),
 	WMADDM("$2182"),
+	/**
+	 * $2183
+	 */
 	WMADDH("$2183")
 	;
 	

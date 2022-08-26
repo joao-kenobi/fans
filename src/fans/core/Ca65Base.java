@@ -25,7 +25,7 @@ public abstract class Ca65Base extends AsmBase {
 		
 		segment("CODE");
 		label("main");
-		rawAsm(".a16"); // the setting from init code
+		rawAsm(".a16");
 		rawAsm(".i16");
 		phk();
 		plb();

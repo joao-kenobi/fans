@@ -85,31 +85,75 @@ public class InitRoutine extends AsmBase {
 			a8Bit();
 			xy16Bit();
 			jsr("clear_palette");
-			jsr("dma_palette");
+			//jsr("dma_palette");
 			jsr("clear_oam");
 //			jsr DMA_OAM
-//			jsr Clear_VRAM
+			jsr("clear_vram");
+
+			a8Bit();			
+			ldaSta("#1", CpuRegisters.MEMSEL); // fastROM
 //
-//		;	a8Bit();
-//			lda #1
-//			sta $420d ;fastROM
-//
-//			AXY16
-//			jml Main ;should jump into the $80 bank, fast ROM
+			axy16Bit();
+			jml("main"); // should jump into the $80 bank, fast ROM
 		});
 	}
 	
-	private void clearOam() {
-		label("clear_oam", () -> {
-			// fills the buffer with 224 for low table
-			// and $00 for high table 
+	private void clearPalette() {
+		label("clear_palette", () -> {
+			int channel = 0;
+			// fills the buffer with zeros
 			
 			php();
 			a8Bit();
 			xy16Bit();
 			
-			clearOam("SpriteEmptyVal", "#$200");
-			clearOam("SpriteUpperEmpty", "#$0020");
+			ldxStx("#.loword(palette_buffer)", BusRegisters.WMADDL);
+			stz(BusRegisters.WMADDH);
+			ldxStx("#$8008", DmaRegisters.DMAPX.channel(channel)); // fixed transfer to WRAM data 2180
+			
+			clearBuffer("DMAZero", "#$200");
+			
+			plp();
+			rts();
+		});
+	}
+	
+	private void clearVram() {
+		label("clear_vram", () -> {
+			int channel = 0;
+			
+			php();
+			a16Bit();
+			xy8Bit();
+			ldxStx("#$80", BusRegisters.VMAIN); // VRAM increment mode +1, after the 2119 write
+			stz(BusRegisters.VMADDL); // VRAM Address
+			stz(DmaRegisters.DASXL.channel(0));// size $10000 bytes ($8000 words)
+			ldaSta("#$1809", DmaRegisters.DMAPX.channel(0)); // fixed transfer (2 reg, write once) to VRAM_DATA $2118-19, and 4301 register
+			ldaSta("#.loword(DMAZero)", DmaRegisters.A1TXH.channel(0)); // and 4303 register
+			
+			ldxStx("#^DMAZero", DmaRegisters.A1BX.channel(channel)); // bank #
+			ldxStx("#1", CpuRegisters.MDMAEN); // DMA_ENABLE start dma, channel 0
+			plp();
+			rts();
+		});
+	}
+	
+	private void clearOam() {
+		label("clear_oam", () -> {
+			int channel = 0;
+			
+			// fills the buffer with 224 for low table
+			// and $00 for high table
+			php();
+			a8Bit();
+			xy16Bit();
+			
+			ldxStx("#.loword(oam_lo_buffer)", BusRegisters.WMADDL);
+			stz(BusRegisters.WMADDH);
+			ldxStx("#$8008", DmaRegisters.DMAPX.channel(channel)); // fixed transfer to WRAM data 2180
+			
+			clearBuffer("SpriteEmptyVal", "#$200");
+			clearBuffer("SpriteUpperEmpty", "#$0020");
 			
 			plp();
 			rts();
@@ -117,14 +161,11 @@ public class InitRoutine extends AsmBase {
 		
 	}
 	
-	private void clearOam(String label, String dasxlValue) {
+	private void clearBuffer(String zeroLabel, String dasxlValue) {
 		int channel = 0;
 		
-		ldxStx("#.loword(oam_lo_buffer)", BusRegisters.WMADDL);
-		stz(BusRegisters.WMADDH);
-		ldxStx("#$8008", DmaRegisters.DMAPX.channel(channel)); // fixed transfer to WRAM data 2180
-		ldxStx("#.loword("+label+")", DmaRegisters.A1TXL.channel(channel));// and 4303
-		ldxStx("#^"+label, DmaRegisters.A1BX.channel(channel)); // bank #
+		ldxStx("#.loword("+zeroLabel+")", DmaRegisters.A1TXL.channel(channel));// and 4303
+		ldxStx("#^"+zeroLabel, DmaRegisters.A1BX.channel(channel)); // bank #
 		
 		ldxStx(dasxlValue, DmaRegisters.DASXL.channel(channel)); //size 512 bytes and 4306 register
 		startDma(channel);
@@ -161,7 +202,11 @@ public class InitRoutine extends AsmBase {
 		});
 		
 		reset();
+		clearWram();
+		// DMA_Palette
 		clearOam();
+		// DMA_OAM
+		clearVram();
 		emptyValueLabels();
 		
 		String fileName = super.getDevKitFolder()+"/framework/asm/includes/ca65/init.asm";

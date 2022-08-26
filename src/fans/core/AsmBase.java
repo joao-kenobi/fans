@@ -385,6 +385,10 @@ public abstract class AsmBase {
 		addCommand("jsr", value);
 	}
 	
+	protected void jml(String value) {
+		addCommand("jml", value);
+	}
+	
 	protected void bra(String value) {
 		addCommand("bra", value);
 	}

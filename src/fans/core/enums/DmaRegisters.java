@@ -19,6 +19,9 @@ public enum DmaRegisters implements IRegisterAddress {
 	BBADX("$43x1"),
 	A1TXL("$43x2"),
 	A1TXH("$43x3"),
+	/**
+	 * $43x4
+	 */
 	A1BX("$43x4"),
 	DASXL("$43x5");
 	

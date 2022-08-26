@@ -8,7 +8,7 @@ import fans.core.enums.DmaRegisters;
 public class InitRoutine extends AsmBase {
 	
 	private void reset() {
-		label("RESET", () -> {
+		label("reset", () -> {
 			
 			sei(); // turn off IRQs
 			clc();
@@ -65,10 +65,42 @@ public class InitRoutine extends AsmBase {
 		});
 	}
 	
-	private void clearOam() {
-		label("clear_oam", () -> {
+	private void clearWram() {
+
+		label("clear_wram", () -> {
 			int channel = 0;
 			
+			a16Bit();
+			xy8Bit();
+			stz(new BusRegisters[] {BusRegisters.WMADDL, BusRegisters.WMADDM});
+			
+			ldaSta("#$8008", DmaRegisters.DMAPX.channel(channel)); // fixed transfer to WRAM data 2180, and 4301 register
+			ldaSta("#.loword(DMAZero)", DmaRegisters.A1TXL.channel(channel)); // and 4303 register
+			ldxStx("#^DMAZero", DmaRegisters.A1BX.channel(channel)); // bank #
+			
+			stz(DmaRegisters.DASXL.channel(channel)); // and 4306 = size 0000 = $10000
+			ldxStx("#1", CpuRegisters.MDMAEN); // start dma, channel {channel} // DMA_ENABLE, clear the 1st half of WRAM
+			stx(CpuRegisters.MDMAEN); // DMA_ENABLE, clear the 2nd half of WRAM
+			
+			a8Bit();
+			xy16Bit();
+			jsr("clear_palette");
+			jsr("dma_palette");
+			jsr("clear_oam");
+//			jsr DMA_OAM
+//			jsr Clear_VRAM
+//
+//		;	a8Bit();
+//			lda #1
+//			sta $420d ;fastROM
+//
+//			AXY16
+//			jml Main ;should jump into the $80 bank, fast ROM
+		});
+	}
+	
+	private void clearOam() {
+		label("clear_oam", () -> {
 			// fills the buffer with 224 for low table
 			// and $00 for high table 
 			
@@ -88,7 +120,7 @@ public class InitRoutine extends AsmBase {
 	private void clearOam(String label, String dasxlValue) {
 		int channel = 0;
 		
-		ldxStx("ldx #.loword(oam_lo_buffer)", BusRegisters.WMADDL);
+		ldxStx("#.loword(oam_lo_buffer)", BusRegisters.WMADDL);
 		stz(BusRegisters.WMADDH);
 		ldxStx("#$8008", DmaRegisters.DMAPX.channel(channel)); // fixed transfer to WRAM data 2180
 		ldxStx("#.loword("+label+")", DmaRegisters.A1TXL.channel(channel));// and 4303
@@ -129,6 +161,7 @@ public class InitRoutine extends AsmBase {
 		});
 		
 		reset();
+		clearOam();
 		emptyValueLabels();
 		
 		String fileName = super.getDevKitFolder()+"/framework/asm/includes/ca65/init.asm";

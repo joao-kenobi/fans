@@ -58,30 +58,37 @@ public abstract class AsmBase {
 	protected String getHomeFolder() {
 		return FileManager.getCurrentProjectDirectory()+"/home/";
 	}
+
+	private void addCommand(String command) {
+		output.append(command).append("\n");
+	}
 	
+	private void addCommand(String command, String parameter) {
+		output.append(command).append(" ").append(parameter).append("\n");
+	}
 	
 	protected void sei() {
-		output.append("sei").append("\n");
+		addCommand("sei");
 	}
 	
 	protected void cld() {
-		output.append("cld").append("\n");
+		addCommand("cld");
 	}
 	
 	protected void clc() {
-		output.append("clc").append("\n");
+		addCommand("clc");
 	}
 	
 	protected void tcd() {
-		output.append("tcd").append("\n");
+		addCommand("tcd");
 	}
 	
 	protected void txs() {
-		output.append("txs").append("\n");
+		addCommand("txs");
 	}
 	
 	protected void adc(String value) {
-		output.append("adc ").append(value).append("\n");
+		addCommand("adc", value);
 	}
 	
 	protected void adcSta(String value, IRegisterAddress register) {
@@ -104,40 +111,40 @@ public abstract class AsmBase {
 	}
 	
 	protected void hirom() {
-		output.append("hirom").append("\n");
+		addCommand("hirom");
 	}
 	
 	
 	protected void sep(String value) {
-		output.append("sep ").append(value).append("\n");
+		addCommand("sep", value);
 	}
 	
 	protected void cmp(String value) {
-		output.append("cmp ").append(value).append("\n");
+		addCommand("cmp", value);
 	}
 	
 	protected void rts() {
-		output.append("rts").append("\n");
+		addCommand("rts");
 	}
 	
 	protected void rti() {
-		output.append("rti").append("\n");
+		addCommand("rti");
 	}
 	
 	protected void beq(String value) {
-		output.append("beq ").append(value).append("\n");
+		addCommand("beq", value);
 	}
 	
 	protected void bcc(String value) {
-		output.append("bcc ").append(value).append("\n");
+		addCommand("bcc", value);
 	}
 	
 	protected void eor(String value) {
-		output.append("eor ").append(value).append("\n");
+		addCommand("eor", value);
 	}
 	
 	protected void bcs(String value) {
-		output.append("bcs ").append(value).append("\n");
+		addCommand("bcs", value);
 	}
 	
 	
@@ -148,7 +155,7 @@ public abstract class AsmBase {
 	}
 	
 	protected void inc(String value) {
-		output.append("inc ").append(value).append("\n");
+		addCommand("inc", value);
 	}
 	
 	protected void dec(String value, int times) {
@@ -158,7 +165,7 @@ public abstract class AsmBase {
 	}
 	
 	protected void dec(String value) {
-		output.append("dec ").append(value).append("\n");
+		addCommand("dec", value);
 	}
 	
 	protected void ldaSta(IRegisterValue registerValue, IRegisterAddress register) {
@@ -172,10 +179,6 @@ public abstract class AsmBase {
 	
 	protected void ldaSta(String valueOrAddress, IRegisterAddress register) {
 		ldaSta(valueOrAddress, register.getAddress()+" ;"+register);
-	}
-	
-	protected void setA_W(String valueOrAddress, IRegisterAddress register) {
-		setA_W(valueOrAddress, register.getAddress()+" ;"+register);
 	}
 	
 	protected void ldaStaTwice(String valueOrAddress, IRegisterAddress register) {
@@ -198,15 +201,11 @@ public abstract class AsmBase {
 			return;
 		}
 		
-		StringBuilder commands = new StringBuilder();
-		commands.append("\n");
-		commands.append("lda ").append(valueOrAddress).append("\n");
+		lda(valueOrAddress);
 		
 		for (String target : targets) {
-			commands.append("sta ").append(target).append("\n");
+			sta(target);
 		}
-		
-		output.append(commands.toString());
 	}
 	
 	protected void ldaBeq(String valueOrAddress, String beqParameter) {
@@ -218,15 +217,6 @@ public abstract class AsmBase {
 		lda(valueOrAddress);
 		cmp(valueOfComparison);
 	}
-	
-	protected void setA_W(String valueOrAddress, String address) {
-		StringBuilder commands = new StringBuilder();
-		commands.append("lda.w ").append(valueOrAddress).append("\n");
-		commands.append("sta.w ").append(address).append("\n");
-		
-		output.append(commands.toString());
-	}
-	
 	
 	protected void ldxStxTwice(String valueOrAddress, IRegisterAddress register) {
 		String prefix = valueOrAddress.contains("#")? "#" : "";
@@ -245,18 +235,14 @@ public abstract class AsmBase {
 		ldxStx_W(valueOrAddress, register.getAddress()+" ;"+register);
 	}
 	
-	protected void ldxStx(String valueOrAddress, String address) {
+	protected void ldxStx(String valueOrAddress, String target) {
 		if (isZero(valueOrAddress)) {			
-			stz(address);
+			stz(target);
 			return;
 		}
 		
-		StringBuilder commands = new StringBuilder();
-		commands.append("\n");
-		commands.append("ldx ").append(valueOrAddress).append("\n");
-		commands.append("stx ").append(address).append("\n");
-		
-		output.append(commands.toString());
+		ldx(valueOrAddress);
+		stx(target);
 	}
 	
 	protected void ldxStx_W(String valueOrAddress, String address) {
@@ -267,17 +253,16 @@ public abstract class AsmBase {
 		output.append(commands.toString());
 	}
 	
-	protected String xce() {
-		output.append("xce").append("\n");
-		return "xce";
+	protected void xce() {
+		addCommand("xce");
 	}
 	
 	protected void phb() {
-		output.append("phb").append("\n");
+		addCommand("phb");
 	}
 	
 	protected void php() {
-		output.append("php").append("\n");
+		addCommand("php");
 	}
 	
 	/**
@@ -286,35 +271,35 @@ public abstract class AsmBase {
 	 * size: 8 bit
 	 */
 	protected void phk() {
-		output.append("phk").append("\n");
+		addCommand("phk");
 	}
 	
 	protected void plb() {
-		output.append("plb").append("\n");
+		addCommand("plb");
 	}
 	
 	protected void plp() {
-		output.append("plp").append("\n");
+		addCommand("plp");
 	}
 	
 	protected void inx() {
-		output.append("inx").append("\n");
+		addCommand("inx");
 	}
 	
 	protected void lda(IRegisterAddress register) {
-		output.append("lda ").append(register.getAddress()).append("\n");
+		lda(register.getAddress());
 	}
 	
 	protected void lda(String value) {
-		output.append("lda ").append(value).append("\n");
+		addCommand("lda", value);
 	}
 	
 	protected void ldx(String value) {
-		output.append("ldx ").append(value).append("\n");
+		addCommand("ldx", value);
 	}
 	
 	protected void ldy(String value) {
-		output.append("ldy ").append(value).append("\n");
+		addCommand("ldy", value);
 	}
 	
 	protected void ldySty(String valueOrAddress, String... targets) {
@@ -335,7 +320,7 @@ public abstract class AsmBase {
 	}
 	
 	protected void sty(String value) {
-		output.append("sty ").append(value).append("\n");
+		addCommand("sty", value);
 	}
 	
 	protected void sta(IRegisterAddress register) {
@@ -343,7 +328,22 @@ public abstract class AsmBase {
 	}
 	
 	protected void sta(String value) {
-		output.append("sta ").append(value).append("\n");
+		addCommand("sta", value);
+	}
+	
+	protected void stx(IRegisterAddress register) {
+		stx(register.getAddress());
+	}
+	
+	protected void stx(String value) {
+		addCommand("stx", value);
+	}
+	
+	
+	protected void stz(IRegisterAddress[] registers) {
+		for (IRegisterAddress register : registers) {
+			stz(register);
+		}
 	}
 	
 	protected void stz(String[] values) {
@@ -359,38 +359,38 @@ public abstract class AsmBase {
 	}
 	
 	protected void stz(String value) {
-		output.append("stz ").append(value).append("\n");
+		addCommand("stz", value);
 	}
 	
 	protected void cpx(String value) {
-		output.append("cpx ").append(value).append("\n");
+		addCommand("cpx", value);
 	}
 	
 	protected void bne(String value) {
-		output.append("bne ").append(value).append("\n");
+		addCommand("bne", value);
 	}
 	protected void stz(IRegisterAddress register) {
 		stz(register.getAddress()+" ;"+register);
 	}
 	
 	protected void rep(String value) {
-		output.append("rep ").append(value).append("\n");
+		addCommand("rep", value);
 	}
 	
 	protected void jmp(String value) {
-		output.append("jmp ").append(value).append("\n");
+		addCommand("jmp", value);
 	}
 	
 	protected void jsr(String value) {
-		output.append("jsr ").append(value).append("\n");
+		addCommand("jsr", value);
 	}
 	
 	protected void bra(String value) {
-		output.append("bra ").append(value).append("\n");
+		addCommand("bra", value);
 	}
 	
 	protected void org(String value) {
-		output.append("org ").append(value).append("\n");
+		addCommand("org", value);
 	}
 	
 	protected void bit(IRegisterAddress register) {
@@ -398,15 +398,15 @@ public abstract class AsmBase {
 	}
 	
 	protected void bit(String value) {
-		output.append("bit ").append(value).append("\n");
+		addCommand("bit", value);
 	}
 	
 	protected void and(String value) {
-		output.append("and ").append(value).append("\n");
+		addCommand("and", value);
 	}
 	
 	protected void lsr(String value) {
-		output.append("lsr ").append(value).append("\n");
+		addCommand("lsr", value);
 	}
 	
 	
@@ -415,18 +415,18 @@ public abstract class AsmBase {
 	}
 	
 	protected void label(String name, MethodBody methodBody) {
-		output.append("\n").append(name).append(":").append("\n");
+		label(name);
 		methodBody.body();
 	}
 	
 	protected void label(String name, MethodBody methodBody, String labelEndName) {
-		output.append("\n").append(name).append(":").append("\n");
+		label(name);
 		methodBody.body();
-		output.append("\n").append(labelEndName).append(":").append("\n");
+		label(labelEndName);
 	}
 	
 	protected void rawAsm(String value) {
-		output.append(value).append("\n");
+		addCommand(value);
 	}
 	
 	
@@ -541,8 +541,8 @@ public abstract class AsmBase {
 	 * </pre>
 	 */
 	protected void foreverLoop() {
-		output.append("\n").append("_foreverLoop").append(":").append("\n");
-		output.append("jmp _foreverLoop").append("\n");
+		label("_foreverLoop");
+		jmp("_foreverLoop");
 	}
 	// =======================================================================================================
 }

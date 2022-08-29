@@ -25,8 +25,8 @@ public abstract class Ca65Base extends AsmBase {
 		
 		segment("CODE");
 		label("main");
-		rawAsm(".a16");
-		rawAsm(".i16");
+		a8Bit();
+		xy16Bit();
 		phk();
 		plb();
 		init();
@@ -239,16 +239,16 @@ public abstract class Ca65Base extends AsmBase {
 		
 		phb();
 		rawAsm(".if .asize = 8");
-		rawAsm("rep #$30");
+		axy16Bit();
 		rawAsm(".elseif .isize = 8");
-		rawAsm("rep #$30");
+		axy16Bit();
 		rawAsm(".endif");
-		rawAsm("lda "+length+"");
-		rawAsm("ldx #.loword("+sourceAddress+")");
-		rawAsm("ldy #.loword("+destinationAddress+")");	
+		lda(length);
+		ldx("#.loword("+sourceAddress+")");
+		ldy("#.loword("+destinationAddress+")");	
 		//mvn src_bank, dst_bank
 		//rawAsm(".byte $54, ^"+destinationAddress+", ^"+sourceAddress+"");
-		rawAsm("mvn ^"+destinationAddress+", ^"+sourceAddress+"");
+		rawAsm("mvn ^"+destinationAddress+", ^"+sourceAddress);
 		plb();
 	}
 	

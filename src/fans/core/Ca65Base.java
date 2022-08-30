@@ -118,6 +118,13 @@ public abstract class Ca65Base extends AsmBase {
 		dma(source, destination, length, transferMode, channel);
 	}
 	
+	
+	protected void dma(String source, int channel) {
+		String destination = null;
+		String transferMode = null;
+		dma(source, destination, "#("+source+"_end-"+source+")", transferMode, channel);
+	}
+	
 	protected void dma(String source, String length, int channel) {
 		String destination = null;
 		String transferMode = null;
@@ -218,6 +225,19 @@ public abstract class Ca65Base extends AsmBase {
 	
 	protected void setBG1And2CharacterAddress(String address) {
 		ldaSta(address, BusRegisters.BG12NBA);
+	}
+	
+	protected void setBG3And4CharacterAddress(String address) {
+		ldaSta(address, BusRegisters.BG34NBA);
+	}
+	
+	
+	protected void enableMainScreenDesignation(String value) {
+		ldaSta(value, BusRegisters.TM);
+	}
+	
+	protected void enableSubscreenDesignation(String value) {
+		ldaSta(value, BusRegisters.TS);
 	}
 	
 	protected void enableNmiAndAutoJoypadRead() {		

@@ -21,7 +21,7 @@ public abstract class AsmBase {
 		return output.toString();
 	}
 	
-	protected void buildAsmFile() {
+	protected void compileAndRun() {
 		String file = getDevKitFolder()+"/output/main.asm";
 		FileManager.writeFile(getGeneratedCode(), file);
 		
@@ -421,6 +421,11 @@ public abstract class AsmBase {
 	protected void label(String name, MethodBody methodBody) {
 		label(name);
 		methodBody.body();
+	}
+	
+	
+	protected void labelWithEnd(String name, MethodBody methodBody) {
+		label(name, methodBody, name+"_end");
 	}
 	
 	protected void label(String name, MethodBody methodBody, String labelEndName) {

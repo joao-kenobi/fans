@@ -96,6 +96,7 @@ This writes to CGRAM, effectively setting the palette colors. Accesses to CGRAM 
 	VMDATAL("$2118"),
 	VMDATAH("$2119"),
 	TM("$212C"),
+	TS("$212D"),
 	RDNMI("$4210"),
 	JOY1H("$4219"),
 	/**

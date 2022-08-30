@@ -1,6 +1,6 @@
 package fans.core.constants;
 
-public class DmaPxConstants {
+public class DmaConstants {
 	/**
 	 * 000 = 1 register write once (1 byte: p)
 	 */
@@ -15,4 +15,6 @@ public class DmaPxConstants {
 	 * 010 = 1 register write twice (2 bytes: p, p)
 	 */
 	public static final String TRANSFER_MODE_2 = "#$02";
+	
+	public static final int CHANNEL_0 = 0;
 }

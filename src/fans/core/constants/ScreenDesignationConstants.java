@@ -1,6 +1,6 @@
 package fans.core.constants;
 
-public class TmOrTsConstants {
+public class ScreenDesignationConstants {
 	public static final String ALL_ON_SCREEN = "#$1f";
 	
 	public static final String BG1_ON = "#$01";

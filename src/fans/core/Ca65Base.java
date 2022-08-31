@@ -1,5 +1,6 @@
 package fans.core;
 
+import fans.core.constants.DmaConstants;
 import fans.core.constants.Joy1Consttants;
 import fans.core.constants.NmiTIMenConstants;
 import fans.core.enums.BusRegisters;
@@ -9,6 +10,14 @@ import fans.core.interfaces.IJoypadReader;
 import fans.core.interfaces.MethodBody;
 
 public abstract class Ca65Base extends AsmBase {
+	
+	protected static final String IN_NMI_VARIABLE = "in_nmi";
+	protected static final String PALETTE_BUFFER_VARIABLE = "palette_buffer";
+	protected static final String PALETTE_BUFFER_END_LABEL = "palette_buffer_end";
+	
+	protected static final String OAM_LO_BUFFER_VARIABLE = "oam_lo_buffer";
+	protected static final String OAM_HI_BUFFER_VARIABLE = "oam_hi_buffer";
+	protected static final String OAM_BUFFER_END_LABEL = "oam_buffer_end";
 	
 	public Ca65Base() {
 		new InitRoutine().createInitAsmFile();
@@ -25,8 +34,8 @@ public abstract class Ca65Base extends AsmBase {
 		
 		segment("CODE");
 		label("main");
-		a8Bit();
-		xy16Bit();
+		rawAsm(".a8");
+		rawAsm(".i16");
 		phk();
 		plb();
 		init();
@@ -40,19 +49,20 @@ public abstract class Ca65Base extends AsmBase {
 	
 	protected void defaultBefore() {
 		rawAsm("\n; === DEFAULT ZEROPAGE SECTION ===");
-		segment("ZEROPAGE", () -> {			
-			rawAsm("in_nmi: .res 2");
+		segment("ZEROPAGE", () -> {
+			variable(IN_NMI_VARIABLE, 2);
 		});
+		
 		rawAsm("; === END DEFAULT ZEROPAGE SECTION ===\n");
 		
 		rawAsm("; === DEFAULT BSS SECTION ===");
 		segment("BSS", () -> {			
-			rawAsm("palette_buffer: .res 512");
-			rawAsm("palette_buffer_end:");
+			variable(PALETTE_BUFFER_VARIABLE, 512);
+			label(PALETTE_BUFFER_END_LABEL);
 
-			rawAsm("oam_lo_buffer: .res 512"); // low table
-			rawAsm("oam_hi_buffer: .res 32"); // high table
-			rawAsm("oam_buffer_end:");
+			variable(OAM_LO_BUFFER_VARIABLE, 512); // low table
+			variable(OAM_HI_BUFFER_VARIABLE, 32); // high table
+			label(OAM_BUFFER_END_LABEL);
 		});
 		rawAsm("; === END DEFAULT BSS SECTION ===\n");
 	}
@@ -66,6 +76,11 @@ public abstract class Ca65Base extends AsmBase {
 		output.append(".incbin \"").append(super.getHomeFolder()+filePath).append("\"\n");
 	}
 	
+	protected void segmentZeroPage(MethodBody methodBody) {
+		segment("ZEROPAGE");
+		methodBody.body();
+	}
+	
 	protected void segment(String value, MethodBody methodBody) {
 		segment(value);
 		methodBody.body();
@@ -75,12 +90,23 @@ public abstract class Ca65Base extends AsmBase {
 		output.append(".segment \"").append(value).append("\"\n");
 	}
 	
+	protected void variable(String name, int size) {
+		output.append(name).append(": .res ").append(size).append("\n");
+	}
+	
 	protected void org(String value) {
 		output.append(".org ").append(value);
 	}
 	
 	protected void dmaToCgram(String source, int length, String transferMode, int channel) {
 		dmaToCgram(source, "#"+Integer.toString(length), transferMode, channel);
+	}
+	
+	protected void dmaBufferToCgram(String transferMode, int channel) {
+		String destination = "#$"+lowByte(BusRegisters.CGDATA); // #$22
+		String length = "#("+PALETTE_BUFFER_VARIABLE+"_end-"+PALETTE_BUFFER_VARIABLE+")";
+		
+		dma(PALETTE_BUFFER_VARIABLE, destination, length, transferMode, channel);
 	}
 	
 	protected void dmaToCgram(String source, String transferMode, int channel) {
@@ -99,7 +125,7 @@ public abstract class Ca65Base extends AsmBase {
 	protected void dmaToVram(String source, String transferMode, int channel) {
 		String sourceWithoutPrefixes = removePrefixes(source);
 		String destination = "#$"+lowByte(BusRegisters.VMDATAL); // #$18
-		String length = "#("+sourceWithoutPrefixes+"_end-"+sourceWithoutPrefixes+")";
+		String length = "#("+sourceWithoutPrefixes+"_end - "+sourceWithoutPrefixes+")";
 		
 		dma(source, destination, length, transferMode, channel);
 	}
@@ -118,6 +144,10 @@ public abstract class Ca65Base extends AsmBase {
 		dma(source, destination, length, transferMode, channel);
 	}
 	
+	
+	protected void dmaBufferToOam(String transferMode, int channel) {
+		dmaToOam(OAM_LO_BUFFER_VARIABLE, "#("+OAM_BUFFER_END_LABEL+" - "+OAM_LO_BUFFER_VARIABLE+")", DmaConstants.TRANSFER_MODE_0, DmaConstants.CHANNEL_0);
+	}
 	
 	protected void dma(String source, int channel) {
 		String destination = null;
@@ -231,6 +261,13 @@ public abstract class Ca65Base extends AsmBase {
 		ldaSta(address, BusRegisters.BG34NBA);
 	}
 	
+	/**
+	 * Write to OBSEL register
+	 * @param value
+	 */
+	protected void setObjectAndCharacterSize(String value) {
+		ldaSta(value, BusRegisters.OBSEL);
+	}
 	
 	protected void enableMainScreenDesignation(String value) {
 		ldaSta(value, BusRegisters.TM);
@@ -267,8 +304,8 @@ public abstract class Ca65Base extends AsmBase {
 		ldx("#.loword("+sourceAddress+")");
 		ldy("#.loword("+destinationAddress+")");	
 		//mvn src_bank, dst_bank
-		//rawAsm(".byte $54, ^"+destinationAddress+", ^"+sourceAddress+"");
-		rawAsm("mvn ^"+destinationAddress+", ^"+sourceAddress);
+		rawAsm(".byte $54, ^"+destinationAddress+", ^"+sourceAddress);
+		//rawAsm("mvn ^"+destinationAddress+", ^"+sourceAddress);
 		plb();
 	}
 	

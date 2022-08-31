@@ -59,11 +59,11 @@ public abstract class AsmBase {
 		return FileManager.getCurrentProjectDirectory()+"/home/";
 	}
 
-	private void addCommand(String command) {
+	protected void addCommand(String command) {
 		output.append(command).append("\n");
 	}
 	
-	private void addCommand(String command, String parameter) {
+	protected void addCommand(String command, String parameter) {
 		output.append(command).append(" ").append(parameter).append("\n");
 	}
 	
@@ -424,6 +424,14 @@ public abstract class AsmBase {
 	}
 	
 	
+	/**
+	 * create two labels like this:<br>
+	 * my_label:<br>
+	 * ; -- your code<br>
+	 * my_label_end:
+	 * @param name
+	 * @param methodBody
+	 */
 	protected void labelWithEnd(String name, MethodBody methodBody) {
 		label(name, methodBody, name+"_end");
 	}

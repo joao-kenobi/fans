@@ -10,12 +10,17 @@ import fans.core.enums.CpuRegisters;
 import fans.core.interfaces.IRegisterAddress;
 import fans.core.interfaces.IRegisterValue;
 import fans.core.interfaces.MethodBody;
+import fans.core.util.BooleanUtils;
 
 public abstract class AsmBase {
 	protected StringBuilder output = new StringBuilder();
-	protected boolean isA8Bit;
-	protected boolean isX8Bit;
-	protected boolean isY8Bit;
+	protected Boolean isA8Bit;
+	protected Boolean isA16Bit;
+	
+	protected Boolean isX8Bit;
+	protected Boolean isY8Bit;
+	protected Boolean isX16Bit;
+	protected Boolean isY16Bit;
 	
 	protected String getGeneratedCode() {
 		return output.toString();
@@ -454,37 +459,107 @@ public abstract class AsmBase {
 	 * sep #$20
 	 */
 	protected void a8Bit() {
+		boolean isAlreadyDefined = BooleanUtils.isTrue(isA8Bit);
+		
+		if (isAlreadyDefined) {
+			return;
+		}
+		
 		sep("#$20 ; A 8 BIT MODE");
 		isA8Bit = true;
+		isA16Bit = false;
 	}
 	
 	/**
 	 * sep #$10
 	 */
 	protected void xy8Bit() {
+		boolean isAlreadyDefined = BooleanUtils.isTrue(isX8Bit) && BooleanUtils.isTrue(isY8Bit);
+		
+		if (isAlreadyDefined) {
+			return;
+		}
+		
 		sep("#$10 ; X,Y 8 BIT MODE");
 		isX8Bit = true;
 		isY8Bit = true;
+		
+		isX16Bit = false;
+		isY16Bit = false;
 	}
 	
+	/**
+	 * sep #$30
+	 */
 	protected void axy8Bit() {
+		boolean isAlreadyDefined = BooleanUtils.isTrue(isA8Bit) && BooleanUtils.isTrue(isX8Bit) && BooleanUtils.isTrue(isY8Bit);
+		
+		if (isAlreadyDefined) {
+			return;
+		}
+		
 		sep("#$30 ; A,X,Y 8 BIT MODE");
+		
+		isA8Bit = true;
+		isA16Bit = false;
+		
+		isX8Bit = true;
+		isX16Bit = false;
+		
+		isY8Bit = true;
+		isY16Bit = false;
 	}
 	
-	protected void a16Bit() {		
+	/**
+	 * rep #$20
+	 */
+	protected void a16Bit() {	
+		boolean isAlreadyDefined = BooleanUtils.isTrue(isA16Bit);
+		
+		if (isAlreadyDefined) {
+			return;
+		}
+		
 		rep("#$20  ; A 16 BIT MODE");
+		
 		isA8Bit = false;
+		isA16Bit = true;
 	}
 	
 	/**
 	 * rep #$30
 	 */
 	protected void axy16Bit() {
+		boolean isAlreadyDefined = BooleanUtils.isTrue(isA16Bit) && BooleanUtils.isTrue(isX16Bit) && BooleanUtils.isTrue(isY16Bit);
+		
+		if (isAlreadyDefined) {
+			return;
+		}
+		
+		
 		rep("#$30 ; A,X,Y 16 BIT MODE");
+		
+		isA8Bit = false;
+		isA16Bit = true;
+		
+		isX8Bit = false;
+		isX16Bit = true;
+		
+		isY8Bit = false;
+		isY16Bit = true;
 	}
 	
+	/**
+	 * rep #$10
+	 */
 	protected void xy16Bit() {
 		rep("#$10 ; X,Y 16 BIT MODE");
+		
+		isX8Bit = false;
+		isX16Bit = true;
+		
+		isY8Bit = false;
+		isY16Bit = true;
 	}
 	
 	

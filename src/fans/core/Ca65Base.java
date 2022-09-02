@@ -34,8 +34,8 @@ public abstract class Ca65Base extends AsmBase {
 		
 		segment("CODE");
 		label("main");
-		rawAsm(".a8");
-		rawAsm(".i16");
+		_a8();
+		_i16();
 		phk();
 		plb();
 		init();
@@ -66,7 +66,29 @@ public abstract class Ca65Base extends AsmBase {
 		});
 		rawAsm("; === END DEFAULT BSS SECTION ===\n");
 	}
+	
 	protected abstract void init();
+	
+	/**
+	 * .a8 command
+	 */
+	protected void _a8() {
+		addCommand(".a8");
+		isA8Bit = true;
+		isA16Bit = false;
+	}
+	
+	/**
+	 * .i16 command
+	 */
+	protected void _i16() {
+		addCommand(".i16");
+		isX16Bit = true;
+		isY16Bit = true;
+		
+		isX8Bit = false;
+		isY8Bit = false;
+	}
 	
 	protected void include(String filePath) {
 		output.append(".include \"").append("../"+filePath).append("\"\n");
@@ -76,7 +98,7 @@ public abstract class Ca65Base extends AsmBase {
 		output.append(".incbin \"").append(super.getHomeFolder()+filePath).append("\"\n");
 	}
 	
-	protected void segmentZeroPage(MethodBody methodBody) {
+	protected void zeroPageSegment(MethodBody methodBody) {
 		segment("ZEROPAGE");
 		methodBody.body();
 	}
@@ -103,10 +125,9 @@ public abstract class Ca65Base extends AsmBase {
 	}
 	
 	protected void dmaBufferToCgram(String transferMode, int channel) {
-		String destination = "#$"+lowByte(BusRegisters.CGDATA); // #$22
 		String length = "#("+PALETTE_BUFFER_VARIABLE+"_end-"+PALETTE_BUFFER_VARIABLE+")";
 		
-		dma(PALETTE_BUFFER_VARIABLE, destination, length, transferMode, channel);
+		dmaToCgram(PALETTE_BUFFER_VARIABLE, length, transferMode, channel);
 	}
 	
 	protected void dmaToCgram(String source, String transferMode, int channel) {
@@ -194,30 +215,43 @@ public abstract class Ca65Base extends AsmBase {
 			reader.onKeyNotLeft();
 			boolean hasImplementation = output.length() > previousLength;
 			
-			if (!hasImplementation) {				
+			if (!hasImplementation) {
+				a16Bit();
 				checkPressedButton(Joy1Consttants.KEY_RIGHT, "@not_right");
 			}
 		});
 		
-		//moveXHandle("@right");
 		label("@right", () -> {
 			reader.onKeyRight();
 		});
 		
 		label("@not_right", () -> {
-			checkPressedButton(Joy1Consttants.KEY_UP, "@not_up");
+			int previousLength = output.length();
+			reader.onKeyNotRight();
+			boolean hasImplementation = output.length() > previousLength;
+			
+			if (!hasImplementation) {				
+				a16Bit();
+				checkPressedButton(Joy1Consttants.KEY_UP, "@not_up");
+			}
+			
 		});
 		
-		//moveYHandle("@up");
 		label("@up", () -> {
 			reader.onKeyUp();
 		});
 		
 		label("@not_up", () -> {
-			checkPressedButton(Joy1Consttants.KEY_DOWN, "@not_down");
+			int previousLength = output.length();
+			reader.onKeyNotUp();
+			boolean hasImplementation = output.length() > previousLength;
+			
+			if (!hasImplementation) {				
+				a16Bit();
+				checkPressedButton(Joy1Consttants.KEY_DOWN, "@not_down");
+			}
 		});
 		
-		//moveYHandle("@down");
 		label("@down", () -> {
 			reader.onKeyDown();
 		});

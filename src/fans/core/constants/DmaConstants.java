@@ -17,4 +17,5 @@ public class DmaConstants {
 	public static final String TRANSFER_MODE_2 = "#$02";
 	
 	public static final int CHANNEL_0 = 0;
+	public static final int CHANNEL_1 = 1;
 }

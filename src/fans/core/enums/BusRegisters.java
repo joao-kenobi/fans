@@ -103,6 +103,7 @@ This writes to CGRAM, effectively setting the palette colors. Accesses to CGRAM 
 	 * OAM Address Registers (Low) 	$2102 	OAMADDL 	single 	write 	f-blank, v-blank
 	 */
 	OAMADDL("$2102"),
+	OAMADDH("$2103"),
 	/**
 	 * OAM Data Write Register 	$2104 	OAMDATA 	single 	write 	f-blank, v-blank
 	 */

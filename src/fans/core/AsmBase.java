@@ -96,6 +96,10 @@ public abstract class AsmBase {
 		addCommand("adc", value);
 	}
 	
+	protected void wai() {
+		addCommand("wai");
+	}
+	
 	protected void adcSta(String value, IRegisterAddress register) {
 		adcSta(value, register.getAddress());
 	}
@@ -432,19 +436,19 @@ public abstract class AsmBase {
 	/**
 	 * create two labels like this:<br>
 	 * my_label:<br>
-	 * ; -- your code<br>
+	 * ; -- my code<br>
 	 * my_label_end:
 	 * @param name
 	 * @param methodBody
 	 */
-	protected void labelWithEnd(String name, MethodBody methodBody) {
+	protected void smartLabel(String name, MethodBody methodBody) {
 		label(name, methodBody, name+"_end");
 	}
 	
 	protected void label(String name, MethodBody methodBody, String labelEndName) {
 		label(name);
 		methodBody.body();
-		label(labelEndName);
+		output.append(labelEndName).append(":\n\n");
 	}
 	
 	protected void rawAsm(String value) {
@@ -635,6 +639,10 @@ public abstract class AsmBase {
 	protected void foreverLoop() {
 		label("_foreverLoop");
 		jmp("_foreverLoop");
+	}
+	
+	protected String toHex(int value) {
+		return Integer.toHexString(value).toUpperCase();
 	}
 	// =======================================================================================================
 }

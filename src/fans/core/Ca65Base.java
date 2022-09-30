@@ -31,16 +31,16 @@ public abstract class Ca65Base extends AsmBase {
 		before();
 		//rawAsm(".include \"../framework/asm/includes/ca65/macros.asm\"");
 		rawAsm(".include \"../framework/asm/includes/ca65/init.asm\"");
+		rawAsm(".include \"../framework/asm/includes/ca65/header.asm\"");
 		
 		segment("CODE");
 		label("main");
-		_a8();
-		_i16();
+		a8Bit();
+		xy16Bit();
 		phk();
 		plb();
 		init();
 		
-		rawAsm(".include \"../framework/asm/includes/ca65/header.asm\"");
 	}
 	
 	protected void before() {
@@ -76,6 +76,15 @@ public abstract class Ca65Base extends AsmBase {
 		addCommand(".a8");
 		isA8Bit = true;
 		isA16Bit = false;
+	}
+	
+	/**
+	 * .a16 command
+	 */
+	protected void _a16() {
+		addCommand(".a8");
+		isA8Bit = false;
+		isA16Bit = true;
 	}
 	
 	/**

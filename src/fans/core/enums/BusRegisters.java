@@ -53,6 +53,28 @@ explanation:
 	 */
 	BG12NBA("$210b"),
 	BG34NBA("$210c"),
+	
+	/**
+	 * name: BG Scroll Registers (BG1)
+	 */
+	BG1HOFS("$210D"),
+	
+	/**
+	 * name: BG Scroll Registers (BG1)
+	 */
+	BG1VOFS("$210E"),
+	
+	/**
+	 * name: BG Scroll Registers (BG2)
+	 */
+	BG2HOFS("$210F"),
+	
+	BG2VOFS("$2110"),
+	
+	BG3HOFS("$2111"),
+	
+	BG3VOFS("$2112"),
+	
 	/**
 	 * $2121
 	 */

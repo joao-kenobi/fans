@@ -12,6 +12,13 @@ import fans.core.interfaces.MethodBody;
 public abstract class Ca65Base extends AsmBase {
 	
 	protected static final String IN_NMI_VARIABLE = "in_nmi";
+	
+	private static final String TEMP1_VARIABLE = "temp1";
+	private static final String PAD1_VARIABLE = "pad1";
+	private static final String PAD1_NEW_VARIABLE = "pad1_new";
+	private static final String PAD2_VARIABLE = "pad2";
+	private static final String PAD2_NEW_VARIABLE = "pad2_new";
+	
 	protected static final String PALETTE_BUFFER_VARIABLE = "palette_buffer";
 	protected static final String PALETTE_BUFFER_END_LABEL = "palette_buffer_end";
 	
@@ -51,6 +58,12 @@ public abstract class Ca65Base extends AsmBase {
 		rawAsm("\n; === DEFAULT ZEROPAGE SECTION ===");
 		segment("ZEROPAGE", () -> {
 			variable(IN_NMI_VARIABLE, 2);
+			
+			variable(TEMP1_VARIABLE, 2);
+			variable(PAD1_VARIABLE, 2);
+			variable(PAD1_NEW_VARIABLE, 2);
+			variable(PAD2_VARIABLE, 2);
+			variable(PAD2_NEW_VARIABLE, 2);
 		});
 		
 		rawAsm("; === END DEFAULT ZEROPAGE SECTION ===\n");
@@ -271,7 +284,7 @@ public abstract class Ca65Base extends AsmBase {
 	}
 	
 	private void checkPressedButton(String keyToCheck, String labelToGoIfNotPressed) {
-		lda("pad1");
+		lda(PAD1_VARIABLE);
 		and(keyToCheck);
 		beq(labelToGoIfNotPressed);
 	}
@@ -364,6 +377,62 @@ public abstract class Ca65Base extends AsmBase {
 		}
 		
 		rawAsm(name+" "+parameters.toString());
+	}
+	
+	protected void waitNMI() {
+		label("wait_nmi", () -> {
+			_a8();
+			_i16();
+			lda(IN_NMI_VARIABLE);
+			
+			checkAgain();
+		});
+	}
+	
+	protected void checkAgain() {
+		label("@check_again", () -> {
+			wai();
+			cmp(IN_NMI_VARIABLE);
+			beq("@check_again");
+			rts();
+		});
+	}
+	
+	protected void padPoll() {
+		label("pad_poll", () -> {			
+			_a8();
+			_i16();
+			// reads both controllers to pad1, pad1_new, pad2, pad2_new
+			// auto controller reads done, call this once per main loop
+			// copies the current controller reads to these variables
+			// pad1, pad1_new, pad2, pad2_new (all 16 bit)
+			php();
+			a8Bit();
+			_wait();
+				
+			a16Bit();
+			ldaSta(PAD1_VARIABLE, TEMP1_VARIABLE); // save last frame
+			ldaSta(CpuRegisters.JOY1L, PAD1_VARIABLE); // controller 1
+			
+			eor(TEMP1_VARIABLE);
+			andSta(PAD1_VARIABLE, PAD1_NEW_VARIABLE);
+			ldaSta(PAD2_VARIABLE, TEMP1_VARIABLE); // save last frame
+			ldaSta(CpuRegisters.JOY2L, PAD2_VARIABLE); // controller 2
+			
+			eor(TEMP1_VARIABLE);
+			andSta(PAD2_VARIABLE, PAD2_NEW_VARIABLE);
+			plp();
+			rts();
+		});
+	}
+	
+	protected void _wait() {
+		label("@wait", () -> {
+			// wait till auto-controller reads are done
+			lda(CpuRegisters.HVBJOY);
+			lsr("a");
+			bcs("@wait");
+		});
 	}
 	
 	protected void clearOam() {

@@ -217,6 +217,17 @@ public abstract class AsmBase {
 		}
 	}
 	
+	
+	protected void ldaAsl(String valueOrAddress, String aslParameter) {
+		lda(valueOrAddress);
+		asl(aslParameter);
+	}
+	
+	protected void ldaAsl(String valueOrAddress) {
+		lda(valueOrAddress);
+		asl("a");
+	}
+	
 	protected void ldaBeq(String valueOrAddress, String beqParameter) {
 		lda(valueOrAddress);
 		beq(beqParameter);
@@ -293,6 +304,10 @@ public abstract class AsmBase {
 	
 	protected void inx() {
 		addCommand("inx");
+	}
+	
+	protected void asl(String value) {
+		addCommand("asl", value);
 	}
 	
 	protected void lda(IRegisterAddress register) {

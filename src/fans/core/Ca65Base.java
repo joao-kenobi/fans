@@ -113,7 +113,10 @@ public abstract class Ca65Base extends AsmBase {
 	}
 	
 	protected void include(String filePath) {
-		output.append(".include \"").append("../"+filePath).append("\"\n");
+		String homeFolder = super.getHomeFolder();
+		String relativePath = homeFolder.substring(homeFolder.indexOf("projects"), homeFolder.length());
+		
+		output.append(".include \"").append("../"+relativePath+filePath.replaceAll("/", "\\\\")).append("\"\n");
 	}
 	
 	protected void incbin(String filePath) {
@@ -284,8 +287,10 @@ public abstract class Ca65Base extends AsmBase {
 	}
 	
 	private void checkPressedButton(String keyToCheck, String labelToGoIfNotPressed) {
+		a16Bit();
 		lda(PAD1_VARIABLE);
 		and(keyToCheck);
+		a8Bit();
 		beq(labelToGoIfNotPressed);
 	}
 	

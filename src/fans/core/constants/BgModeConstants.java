@@ -5,6 +5,15 @@ package fans.core.constants;
  */
 public class BgModeConstants {
 	
+	
+	/**
+	 * layer 1: 4 colors<br>
+	 * layer 2: 4colors<br>
+	 * layer 3: 4 colors<br>
+	 * layer 4: 4 colors
+	 */
+	public static final String MODE0 = "#$00";
+	
 	/**
 	 * layer 1: 16 colors<br>
 	 * layer 2: 16 colors<br>
